@@ -1,4 +1,5 @@
 import asyncio
+from decimal import Decimal
 from datetime import date, timedelta, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import AsyncSessionLocal, engine
@@ -25,10 +26,10 @@ async def seed(*, reset_demo=False):
     async with AsyncSessionLocal() as session:
 
         products = [
-            Product(name="Widget A", category="Gadgets", price=19.99, is_active=True),
-            Product(name="Widget B", category="Gadgets", price=29.99, is_active=True),
-            Product(name="Gizmo X", category="Tools", price=9.99, is_active=True),
-            Product(name="Gizmo Y", category="Tools", price=14.49, is_active=False),
+            Product(name="Widget A", category="Gadgets", price=Decimal("19.99"), is_active=True),
+            Product(name="Widget B", category="Gadgets", price=Decimal("29.99"), is_active=True),
+            Product(name="Gizmo X", category="Tools", price=Decimal("9.99"), is_active=True),
+            Product(name="Gizmo Y", category="Tools", price=Decimal("14.49"), is_active=False),
         ]
         session.add_all(products)
         await session.flush()
@@ -58,10 +59,10 @@ async def seed(*, reset_demo=False):
 
 
         sales = [
-            Sale(product_id=products[0].id, quantity_sold=10, sale_date=date.today(), total_amount=199.90),
-            Sale(product_id=products[0].id, quantity_sold=5, sale_date=date.today() - timedelta(days=1), total_amount=99.95),
-            Sale(product_id=products[1].id, quantity_sold=2, sale_date=date.today(), total_amount=59.98),
-            Sale(product_id=products[2].id, quantity_sold=1, sale_date=date.today() - timedelta(days=7), total_amount=9.99),
+            Sale(product_id=products[0].id, quantity_sold=10, sale_date=date.today(), total_amount=Decimal("199.90")),
+            Sale(product_id=products[0].id, quantity_sold=5, sale_date=date.today() - timedelta(days=1), total_amount=Decimal("99.95")),
+            Sale(product_id=products[1].id, quantity_sold=2, sale_date=date.today(), total_amount=Decimal("59.98")),
+            Sale(product_id=products[2].id, quantity_sold=1, sale_date=date.today() - timedelta(days=7), total_amount=Decimal("9.99")),
         ]
         session.add_all(sales)
 

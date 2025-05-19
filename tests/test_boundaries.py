@@ -23,7 +23,7 @@ async def test_comparison_excludes_future_sales():
     async with AsyncClient(transport=ASGITransport(app=app),base_url="http://test") as client:
         response=await client.get("/sales/compare?interval=day")
         assert response.status_code==200
-        assert response.json()["current_period_revenue"]==10
+        assert response.json()["current_period_revenue"]=="10.00"
 
 @pytest.mark.asyncio
 async def test_revenue_category_and_recorded_sale_do_not_change_inventory():
@@ -31,5 +31,5 @@ async def test_revenue_category_and_recorded_sale_do_not_change_inventory():
         await client.post("/inventory/",json={"product_id":1,"quantity":5})
         await client.post("/sales/",json={"product_id":1,"quantity_sold":2,"sale_date":"2025-01-01","total_amount":"20.00"})
         response=await client.get("/sales/summary_by_category")
-        assert response.json()==[{"category":"Demo","revenue":20.0}]
+        assert response.json()==[{"category":"Demo","revenue":"20.00"}]
         assert (await client.get("/inventory/")).json()[0]["quantity"]==5

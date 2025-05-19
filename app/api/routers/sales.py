@@ -2,11 +2,24 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Literal
 from datetime import date
-from fastapi.responses import JSONResponse
+from decimal import ROUND_HALF_UP, Decimal
 
 from app.db.session import get_db
 from app.crud import sales
-from app.schemas.sales import SaleCreate, SaleRead
+from app.schemas.sales import (
+    CategoryRevenue,
+    RevenueComparison,
+    RevenuePeriod,
+    SaleCreate,
+    SaleRead,
+)
+
+CENT = Decimal("0.01")
+
+
+def to_money(value) -> Decimal:
+    # SQLite hands sums back as binary floats, so quantize before they reach JSON.
+    return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
@@ -40,40 +53,37 @@ async def list_sales(
     )
 
 # Revenue summary by interval
-@router.get("/summary")
+@router.get("/summary", response_model=List[RevenuePeriod])
 async def revenue_summary(
     interval: Literal["day", "week", "month", "year"] = "month",
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        data = await sales.get_revenue_summary(db, interval)
-        return [{"period": row[0], "revenue": float(row[1])} for row in data]
-    except ValueError:
-        return JSONResponse(status_code=400, content={"error": "Invalid interval"})
+    data = await sales.get_revenue_summary(db, interval)
+    return [{"period": row[0], "revenue": to_money(row[1])} for row in data]
 
 # Revenue summary by product category
-@router.get("/summary_by_category")
+@router.get("/summary_by_category", response_model=List[CategoryRevenue])
 async def revenue_by_category(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db)
 ):
     data = await sales.get_revenue_by_category(db, start_date, end_date)
-    return [{"category": row[0], "revenue": float(row[1])} for row in data]
+    return [{"category": row[0], "revenue": to_money(row[1])} for row in data]
 
 # Revenue comparison: current vs previous period
-@router.get("/compare")
+@router.get("/compare", response_model=RevenueComparison)
 async def compare_revenue(
     interval: Literal["day", "week", "month", "year"] = "month",
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        current, previous = await sales.get_current_vs_previous_revenue(db, interval)
-        delta = (current - previous) / previous * 100 if previous > 0 else 0
-        return {
-            "current_period_revenue": float(current),
-            "previous_period_revenue": float(previous),
-            "change_percent": round(delta, 2)
-        }
-    except ValueError:
-        return JSONResponse(status_code=400, content={"error": "Invalid interval"})
+    current, previous = await sales.get_current_vs_previous_revenue(db, interval)
+    current, previous = to_money(current), to_money(previous)
+    change = None
+    if previous > 0:
+        change = ((current - previous) / previous * 100).quantize(CENT, rounding=ROUND_HALF_UP)
+    return {
+        "current_period_revenue": current,
+        "previous_period_revenue": previous,
+        "change_percent": change,
+    }

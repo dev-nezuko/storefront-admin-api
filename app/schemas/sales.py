@@ -15,3 +15,20 @@ class SaleRead(SaleBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RevenuePeriod(BaseModel):
+    period: date | int | str
+    revenue: Decimal
+
+
+class CategoryRevenue(BaseModel):
+    category: str | None
+    revenue: Decimal
+
+
+class RevenueComparison(BaseModel):
+    current_period_revenue: Decimal
+    previous_period_revenue: Decimal
+    # None when the previous period had no revenue: growth from zero is undefined.
+    change_percent: Decimal | None
