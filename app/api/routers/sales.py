@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import date
 from fastapi.responses import JSONResponse
 
@@ -22,8 +22,8 @@ async def list_sales(
     end_date: Optional[date] = None,
     product_id: Optional[int] = None,
     category: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
 ):
     if not any([start_date, end_date, product_id, category]):
@@ -42,7 +42,7 @@ async def list_sales(
 # Revenue summary by interval
 @router.get("/summary")
 async def revenue_summary(
-    interval: str = Query("month", enum=["day", "week", "month", "year"]),
+    interval: Literal["day", "week", "month", "year"] = "month",
     db: AsyncSession = Depends(get_db)
 ):
     try:
@@ -64,7 +64,7 @@ async def revenue_by_category(
 # Revenue comparison: current vs previous period
 @router.get("/compare")
 async def compare_revenue(
-    interval: str = Query("month", enum=["day", "week", "month", "year"]),
+    interval: Literal["day", "week", "month", "year"] = "month",
     db: AsyncSession = Depends(get_db)
 ):
     try:

@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 
 class ProductBase(BaseModel):
-    name: str
-    category: str
-    price: Decimal
+    name: str = Field(min_length=1, max_length=255)
+    category: str = Field(min_length=1, max_length=100)
+    price: Decimal = Field(ge=0, max_digits=10, decimal_places=2, allow_inf_nan=False)
     is_active: bool = True
 
 class ProductCreate(ProductBase):
@@ -13,5 +13,4 @@ class ProductCreate(ProductBase):
 class ProductRead(ProductBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

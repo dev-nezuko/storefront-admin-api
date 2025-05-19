@@ -5,7 +5,7 @@ aiomysql
 alembic
 python-dotenv
 greenlet
-pydantic
+pydantic>=2,<3
 pydantic-settings
 httpx
 pytest

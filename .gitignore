@@ -19,3 +19,9 @@ alembic/versions/*.pyc
 
 # Mac/Linux file system files
 *.~undo-tree*
+
+.env.*
+!.env.example
+*.db
+*.sqlite3
+.DS_Store

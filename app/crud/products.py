@@ -4,7 +4,7 @@ from app.models.products import Product
 from app.schemas.products import ProductCreate
 
 async def create_product(db: AsyncSession, product_in: ProductCreate) -> Product:
-    new = Product(**product_in.dict())
+    new = Product(**product_in.model_dump())
     db.add(new)
     await db.commit()
     await db.refresh(new)

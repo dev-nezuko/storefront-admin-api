@@ -8,7 +8,9 @@ from app.models.sales import Sale
 from app.models.inventory_log import InventoryLog
 import sys
 
-async def seed():
+async def seed(*, reset_demo=False):
+    if not reset_demo:
+        raise RuntimeError("Destructive demo reset requires explicit --reset-demo")
 
     async with engine.begin() as conn:
         await conn.run_sync(Product.metadata.drop_all)
@@ -78,8 +80,4 @@ async def seed():
         await session.commit()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(seed())
-    except RuntimeError as e:
-        if "Event loop is closed" in str(e) and sys.version_info >= (3, 11):
-            pass
+    asyncio.run(seed(reset_demo="--reset-demo" in sys.argv))

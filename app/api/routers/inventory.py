@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.db.session import get_db
@@ -15,10 +15,10 @@ async def create(inv: InventoryCreate, db: AsyncSession = Depends(get_db)):
 
 @router.get("/", response_model=List[InventoryRead])
 async def list(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     low_stock: bool = False,
-    threshold: int = 10,
+    threshold: int = Query(10, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     if low_stock:

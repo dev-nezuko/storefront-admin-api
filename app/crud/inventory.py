@@ -6,7 +6,7 @@ from app.schemas.inventory import InventoryCreate
 from app.models.inventory_log import InventoryLog
 
 async def create_inventory(db: AsyncSession, inventory_in: InventoryCreate):
-    inv = Inventory(**inventory_in.dict())
+    inv = Inventory(**inventory_in.model_dump())
     db.add(inv)
     await db.flush()
 

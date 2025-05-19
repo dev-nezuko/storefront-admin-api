@@ -1,10 +1,10 @@
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from app.main import app
 
 @pytest.mark.asyncio
 async def test_create_inventory():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
 
         response = await client.post("/inventory/", json={
             "product_id": 1,
@@ -16,14 +16,14 @@ async def test_create_inventory():
 
 @pytest.mark.asyncio
 async def test_list_inventory():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/inventory/")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
 
 @pytest.mark.asyncio
 async def test_low_stock_inventory():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/inventory/?low_stock=true&threshold=100")
         assert response.status_code == 200
         assert isinstance(response.json(), list)

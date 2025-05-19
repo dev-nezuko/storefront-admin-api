@@ -10,7 +10,7 @@ from datetime import date, timedelta
 
 
 async def create_sale(db: AsyncSession, sale_in: SaleCreate):
-    sale = Sale(**sale_in.dict())
+    sale = Sale(**sale_in.model_dump())
     db.add(sale)
     await db.commit()
     await db.refresh(sale)
@@ -29,7 +29,7 @@ async def get_revenue_summary(db: AsyncSession, interval: str = "month"):
         "year": func.year(Sale.sale_date),
     }.get(interval)
 
-    if not group_expr:
+    if group_expr is None:
         raise ValueError("Invalid interval")
 
     result = await db.execute(
@@ -106,7 +106,7 @@ async def get_current_vs_previous_revenue(db: AsyncSession, interval: str = "mon
     current_end = today
     previous_end = current_start - timedelta(days=1)
 
-    current_stmt = select(func.sum(Sale.total_amount)).where(Sale.sale_date >= current_start)
+    current_stmt = select(func.sum(Sale.total_amount)).where(Sale.sale_date >= current_start, Sale.sale_date <= current_end)
     previous_stmt = select(func.sum(Sale.total_amount)).where(
         Sale.sale_date >= previous_start, Sale.sale_date <= previous_end
     )
