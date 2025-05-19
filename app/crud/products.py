@@ -25,5 +25,5 @@ async def product_exists(db: AsyncSession, product_id: int) -> bool:
     return await db.get(Product, product_id) is not None
 
 async def get_products(db: AsyncSession, skip: int = 0, limit: int = 100):
-    result = await db.execute(select(Product).offset(skip).limit(limit))
+    result = await db.execute(select(Product).order_by(Product.id).offset(skip).limit(limit))
     return result.scalars().all()

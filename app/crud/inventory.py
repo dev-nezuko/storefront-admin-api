@@ -21,18 +21,18 @@ async def create_inventory(db: AsyncSession, inventory_in: InventoryCreate):
     return inv
 
 async def get_inventory(db: AsyncSession, skip=0, limit=100):
-    result = await db.execute(select(Inventory).offset(skip).limit(limit))
+    result = await db.execute(select(Inventory).order_by(Inventory.id).offset(skip).limit(limit))
     return result.scalars().all()
 
 
 async def get_low_stock_inventory(db: AsyncSession, threshold=10, skip=0, limit=100):
     result = await db.execute(
-        select(Inventory).where(Inventory.quantity < threshold).offset(skip).limit(limit)
+        select(Inventory).where(Inventory.quantity < threshold).order_by(Inventory.id).offset(skip).limit(limit)
     )
     return result.scalars().all()
 
 async def get_inventory_logs(db: AsyncSession, product_id: int):
     result = await db.execute(
-        select(InventoryLog).where(InventoryLog.product_id == product_id).order_by(InventoryLog.created_at.desc())
+        select(InventoryLog).where(InventoryLog.product_id == product_id).order_by(InventoryLog.created_at.desc(), InventoryLog.id.desc())
     )
     return result.scalars().all()

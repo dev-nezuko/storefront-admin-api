@@ -18,7 +18,7 @@ async def create_sale(db: AsyncSession, sale_in: SaleCreate):
     return sale
 
 async def get_sales(db: AsyncSession, skip=0, limit=100):
-    result = await db.execute(select(Sale).offset(skip).limit(limit))
+    result = await db.execute(select(Sale).order_by(Sale.id).offset(skip).limit(limit))
     return result.scalars().all()
 
 
@@ -59,7 +59,7 @@ async def get_filtered_sales(
     skip=0,
     limit=100
 ):
-    stmt = select(Sale).join(Product).offset(skip).limit(limit)
+    stmt = select(Sale).join(Product).order_by(Sale.id).offset(skip).limit(limit)
 
     filters = []
     if start_date:
@@ -81,7 +81,8 @@ async def get_filtered_sales(
 async def get_revenue_by_category(db: AsyncSession, start_date=None, end_date=None):
     stmt = select(Product.category, func.sum(Sale.total_amount)) \
         .join(Product) \
-        .group_by(Product.category)
+        .group_by(Product.category) \
+        .order_by(Product.category)
 
     if start_date:
         stmt = stmt.where(Sale.sale_date >= start_date)
