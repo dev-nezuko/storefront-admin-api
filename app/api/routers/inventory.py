@@ -10,7 +10,7 @@ from app.crud.products import product_exists
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
-@router.post("/", response_model=InventoryRead)
+@router.post("/", response_model=InventoryRead, status_code=201)
 async def create(inv: InventoryCreate, db: AsyncSession = Depends(get_db)):
     if not await product_exists(db, inv.product_id):
         raise HTTPException(404, detail=f"Product {inv.product_id} not found")

@@ -10,7 +10,7 @@ async def test_create_inventory():
             "product_id": 1,
             "quantity": 50
         })
-        assert response.status_code == 200
+        assert response.status_code == 201
         data = response.json()
         assert data["product_id"] == 1
 

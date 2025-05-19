@@ -11,7 +11,7 @@ async def test_create_sale():
             "sale_date": "2025-05-19",
             "total_amount": 59.97
         })
-        assert response.status_code == 200
+        assert response.status_code == 201
         data = response.json()
         assert data["product_id"] == 1
 

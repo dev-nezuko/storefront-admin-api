@@ -30,7 +30,7 @@ def check_date_range(start_date: Optional[date], end_date: Optional[date]) -> No
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
 # Create a new sale
-@router.post("/", response_model=SaleRead)
+@router.post("/", response_model=SaleRead, status_code=201)
 async def create(sale: SaleCreate, db: AsyncSession = Depends(get_db)):
     if not await product_exists(db, sale.product_id):
         raise HTTPException(404, detail=f"Product {sale.product_id} not found")
