@@ -2,6 +2,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 
 class ProductBase(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(min_length=1, max_length=255)
     category: str = Field(min_length=1, max_length=100)
     price: Decimal = Field(ge=0, max_digits=10, decimal_places=2, allow_inf_nan=False)

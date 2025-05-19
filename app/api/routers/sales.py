@@ -6,6 +6,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from app.db.session import get_db
 from app.crud import sales
+from app.crud.products import product_exists
 from app.schemas.sales import (
     CategoryRevenue,
     RevenueComparison,
@@ -31,6 +32,8 @@ router = APIRouter(prefix="/sales", tags=["Sales"])
 # Create a new sale
 @router.post("/", response_model=SaleRead)
 async def create(sale: SaleCreate, db: AsyncSession = Depends(get_db)):
+    if not await product_exists(db, sale.product_id):
+        raise HTTPException(404, detail=f"Product {sale.product_id} not found")
     return await sales.create_sale(db, sale)
 
 # List all or filtered sales
@@ -38,8 +41,8 @@ async def create(sale: SaleCreate, db: AsyncSession = Depends(get_db)):
 async def list_sales(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    product_id: Optional[int] = None,
-    category: Optional[str] = None,
+    product_id: Optional[int] = Query(None, gt=0),
+    category: Optional[str] = Query(None, min_length=1, max_length=100),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
