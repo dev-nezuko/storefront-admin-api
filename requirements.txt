@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy>=1.4
+aiomysql
+alembic
+python-dotenv
+greenlet
+pydantic
+pydantic-settings
+httpx
+pytest
