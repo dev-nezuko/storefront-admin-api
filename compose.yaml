@@ -1,0 +1,63 @@
+x-mysql-healthcheck: &mysql-healthcheck
+  # TCP ping: the image's temporary init server only listens on the socket,
+  # so this stays unhealthy until schema.sql has been applied.
+  test: ["CMD-SHELL", "mysqladmin ping --protocol=tcp -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+  interval: 5s
+  timeout: 5s
+  retries: 30
+  start_period: 20s
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ecom_admin}
+      MYSQL_USER: ${MYSQL_USER:-storefront}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck: *mysql-healthcheck
+
+  api:
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: mysql+aiomysql://${MYSQL_USER:-storefront}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-ecom_admin}
+      CREATE_SCHEMA: "false"
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # `docker compose --profile test run --rm tests` runs the whole suite,
+  # including tests/test_mysql.py against a throwaway in-memory MySQL.
+  test-db:
+    profiles: ["test"]
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: storefront_test
+      MYSQL_USER: storefront
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck: *mysql-healthcheck
+
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+      TEST_MYSQL_URL: mysql+aiomysql://storefront:${MYSQL_PASSWORD}@test-db:3306/storefront_test
+    depends_on:
+      test-db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:

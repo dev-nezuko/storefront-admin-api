@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+.venv
+venv
+env
+project_venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+docs
+ERD.png
+README.md
