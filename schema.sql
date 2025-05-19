@@ -3,7 +3,8 @@ CREATE TABLE products (
   name VARCHAR(255) UNIQUE NOT NULL,
   category VARCHAR(100),
   price DECIMAL(10, 2) NOT NULL,
-  is_active BOOLEAN DEFAULT TRUE
+  is_active BOOLEAN DEFAULT TRUE,
+  INDEX ix_products_category (category)
 );
 
 CREATE TABLE inventory (
@@ -19,6 +20,7 @@ CREATE TABLE sales (
   quantity_sold INT NOT NULL,
   sale_date DATE NOT NULL,
   total_amount DECIMAL(10, 2) NOT NULL,
+  INDEX ix_sales_sale_date (sale_date),
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
