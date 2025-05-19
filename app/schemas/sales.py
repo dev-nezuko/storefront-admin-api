@@ -18,7 +18,7 @@ class SaleRead(SaleBase):
 
 
 class RevenuePeriod(BaseModel):
-    period: date | int | str
+    period: str
     revenue: Decimal
 
 

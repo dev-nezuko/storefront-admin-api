@@ -6,6 +6,7 @@ from sqlalchemy import func
 from app.models.products import Product
 from sqlalchemy import and_, select, join, func
 from datetime import date, timedelta
+from decimal import Decimal
 
 
 
@@ -21,25 +22,32 @@ async def get_sales(db: AsyncSession, skip=0, limit=100):
     return result.scalars().all()
 
 
+def period_label(day: date, interval: str) -> str:
+    if interval == "day":
+        return day.isoformat()
+    if interval == "week":
+        iso_year, iso_week, _ = day.isocalendar()
+        return f"{iso_year}-W{iso_week:02d}"
+    if interval == "month":
+        return f"{day.year}-{day.month:02d}"
+    if interval == "year":
+        return str(day.year)
+    raise ValueError("Invalid interval")
+
+
 async def get_revenue_summary(db: AsyncSession, interval: str = "month"):
-    group_expr = {
-        "day": func.date(Sale.sale_date),
-        "week": func.year(Sale.sale_date) * 100 + func.week(Sale.sale_date),
-        "month": func.date_format(Sale.sale_date, "%Y-%m"),
-        "year": func.year(Sale.sale_date),
-    }.get(interval)
-
-    if group_expr is None:
-        raise ValueError("Invalid interval")
-
+    # Group per day in SQL and roll up here: ISO weeks stay intact across New
+    # Year and the same code runs on MySQL and SQLite.
     result = await db.execute(
-        select(group_expr.label("period"), func.sum(Sale.total_amount).label("revenue"))
-        .group_by(group_expr)
-        .order_by(group_expr)
+        select(Sale.sale_date, func.sum(Sale.total_amount))
+        .group_by(Sale.sale_date)
+        .order_by(Sale.sale_date)
     )
-    return result.all()
-
-
+    totals: dict[str, Decimal] = {}
+    for day, revenue in result.all():
+        label = period_label(day, interval)
+        totals[label] = totals.get(label, Decimal(0)) + Decimal(str(revenue))
+    return list(totals.items())
 
 
 async def get_filtered_sales(
@@ -85,9 +93,8 @@ async def get_revenue_by_category(db: AsyncSession, start_date=None, end_date=No
 
 
 
-async def get_current_vs_previous_revenue(db: AsyncSession, interval: str = "month"):
-    today = date.today()
-
+def period_bounds(interval: str, today: date):
+    """Return (current_start, previous_start, previous_end); the current period runs to today."""
     if interval == "day":
         current_start = today
         previous_start = today - timedelta(days=1)
@@ -102,11 +109,14 @@ async def get_current_vs_previous_revenue(db: AsyncSession, interval: str = "mon
         previous_start = current_start.replace(year=current_start.year - 1)
     else:
         raise ValueError("Invalid interval")
+    return current_start, previous_start, current_start - timedelta(days=1)
 
-    current_end = today
-    previous_end = current_start - timedelta(days=1)
 
-    current_stmt = select(func.sum(Sale.total_amount)).where(Sale.sale_date >= current_start, Sale.sale_date <= current_end)
+async def get_current_vs_previous_revenue(db: AsyncSession, interval: str = "month", today: date | None = None):
+    today = today or date.today()
+    current_start, previous_start, previous_end = period_bounds(interval, today)
+
+    current_stmt = select(func.sum(Sale.total_amount)).where(Sale.sale_date >= current_start, Sale.sale_date <= today)
     previous_stmt = select(func.sum(Sale.total_amount)).where(
         Sale.sale_date >= previous_start, Sale.sale_date <= previous_end
     )

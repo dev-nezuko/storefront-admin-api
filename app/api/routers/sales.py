@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Literal
 from datetime import date
@@ -21,6 +21,11 @@ def to_money(value) -> Decimal:
     # SQLite hands sums back as binary floats, so quantize before they reach JSON.
     return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)
 
+
+def check_date_range(start_date: Optional[date], end_date: Optional[date]) -> None:
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
+
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
 # Create a new sale
@@ -39,6 +44,7 @@ async def list_sales(
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
 ):
+    check_date_range(start_date, end_date)
     if not any([start_date, end_date, product_id, category]):
         return await sales.get_sales(db, skip, limit)
 
@@ -68,6 +74,7 @@ async def revenue_by_category(
     end_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db)
 ):
+    check_date_range(start_date, end_date)
     data = await sales.get_revenue_by_category(db, start_date, end_date)
     return [{"category": row[0], "revenue": to_money(row[1])} for row in data]
 
