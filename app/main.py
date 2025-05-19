@@ -1,13 +1,13 @@
 from fastapi import FastAPI
-import os
 from contextlib import asynccontextmanager
 from app.api.routers import products, sales, inventory
 from app.db.base import Base
+from app.core.config import settings
 from app.db.session import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if os.environ.get("CREATE_SCHEMA", "false").lower() == "true":
+    if settings.CREATE_SCHEMA:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     try:
