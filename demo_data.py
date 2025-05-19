@@ -71,5 +71,12 @@ async def seed(*, reset_demo=False):
 
         await session.commit()
 
+async def main():
+    try:
+        await seed(reset_demo="--reset-demo" in sys.argv)
+    finally:
+        # Close pooled connections while the event loop is still running.
+        await engine.dispose()
+
 if __name__ == "__main__":
-    asyncio.run(seed(reset_demo="--reset-demo" in sys.argv))
+    asyncio.run(main())
