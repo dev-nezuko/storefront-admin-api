@@ -1,23 +1,24 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
-from app.db.session import get_db
+
 from app.crud import inventory
-from app.schemas.inventory import InventoryCreate, InventoryRead
-from app.schemas.inventory_log import InventoryLogRead
 from app.crud.inventory import get_inventory_logs
 from app.crud.products import product_exists
+from app.db.session import get_db
+from app.schemas.inventory import InventoryCreate, InventoryRead
+from app.schemas.inventory_log import InventoryLogRead
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
 @router.post("/", response_model=InventoryRead, status_code=201)
-async def create(inv: InventoryCreate, db: AsyncSession = Depends(get_db)):
+async def record_stock(inv: InventoryCreate, db: AsyncSession = Depends(get_db)):
     if not await product_exists(db, inv.product_id):
         raise HTTPException(404, detail=f"Product {inv.product_id} not found")
     return await inventory.create_inventory(db, inv)
 
-@router.get("/", response_model=List[InventoryRead])
-async def list(
+@router.get("/", response_model=list[InventoryRead])
+async def list_inventory(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     low_stock: bool = False,
@@ -28,8 +29,8 @@ async def list(
         return await inventory.get_low_stock_inventory(db, threshold=threshold, skip=skip, limit=limit)
     return await inventory.get_inventory(db, skip, limit)
 
-@router.get("/logs/{product_id}", response_model=List[InventoryLogRead])
-async def logs(product_id: int = Path(gt=0), db: AsyncSession = Depends(get_db)):
+@router.get("/logs/{product_id}", response_model=list[InventoryLogRead])
+async def list_inventory_logs(product_id: int = Path(gt=0), db: AsyncSession = Depends(get_db)):
     if not await product_exists(db, product_id):
         raise HTTPException(404, detail=f"Product {product_id} not found")
     return await get_inventory_logs(db, product_id)

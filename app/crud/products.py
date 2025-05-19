@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.models.products import Product
 from app.schemas.products import ProductCreate
 

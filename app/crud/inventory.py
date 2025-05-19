@@ -1,9 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.inventory import Inventory
-from app.schemas.inventory import InventoryCreate
 from app.models.inventory_log import InventoryLog
+from app.schemas.inventory import InventoryCreate
+
 
 async def create_inventory(db: AsyncSession, inventory_in: InventoryCreate):
     inv = Inventory(**inventory_in.model_dump())

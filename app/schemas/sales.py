@@ -1,6 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field
 from datetime import date
 from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class SaleBase(BaseModel):
     product_id: int = Field(gt=0)

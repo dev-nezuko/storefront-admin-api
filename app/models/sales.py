@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, ForeignKey, Date, Numeric
+from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric
+
 from app.db.base import Base
+
 
 class Sale(Base):
     __tablename__ = "sales"

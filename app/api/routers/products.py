@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
 
 from app.crud.products import DuplicateProductName, create_product, get_products
-from app.schemas.products import ProductCreate, ProductRead
 from app.db.session import get_db
+from app.schemas.products import ProductCreate, ProductRead
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -18,7 +18,7 @@ async def register_product(
     except DuplicateProductName:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=f"A product named {product_in.name!r} already exists")
 
-@router.get("/", response_model=List[ProductRead])
+@router.get("/", response_model=list[ProductRead])
 async def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),

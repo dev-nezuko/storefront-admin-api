@@ -1,9 +1,12 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.api.routers import products, sales, inventory
-from app.db.base import Base
+
+from fastapi import FastAPI
+
+from app.api.routers import inventory, products, sales
 from app.core.config import settings
+from app.db.base import Base
 from app.db.session import engine
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

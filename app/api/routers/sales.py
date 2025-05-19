@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Literal
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Literal
 
-from app.db.session import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.crud import sales
 from app.crud.products import product_exists
+from app.db.session import get_db
 from app.schemas.sales import (
     CategoryRevenue,
     RevenueComparison,
@@ -23,26 +24,24 @@ def to_money(value) -> Decimal:
     return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)
 
 
-def check_date_range(start_date: Optional[date], end_date: Optional[date]) -> None:
+def check_date_range(start_date: date | None, end_date: date | None) -> None:
     if start_date and end_date and start_date > end_date:
         raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
 
-# Create a new sale
 @router.post("/", response_model=SaleRead, status_code=201)
-async def create(sale: SaleCreate, db: AsyncSession = Depends(get_db)):
+async def record_sale(sale: SaleCreate, db: AsyncSession = Depends(get_db)):
     if not await product_exists(db, sale.product_id):
         raise HTTPException(404, detail=f"Product {sale.product_id} not found")
     return await sales.create_sale(db, sale)
 
-# List all or filtered sales
-@router.get("/", response_model=List[SaleRead])
+@router.get("/", response_model=list[SaleRead])
 async def list_sales(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    product_id: Optional[int] = Query(None, gt=0),
-    category: Optional[str] = Query(None, min_length=1, max_length=100),
+    start_date: date | None = None,
+    end_date: date | None = None,
+    product_id: int | None = Query(None, gt=0),
+    category: str | None = Query(None, min_length=1, max_length=100),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db)
@@ -61,8 +60,7 @@ async def list_sales(
         limit=limit,
     )
 
-# Revenue summary by interval
-@router.get("/summary", response_model=List[RevenuePeriod])
+@router.get("/summary", response_model=list[RevenuePeriod])
 async def revenue_summary(
     interval: Literal["day", "week", "month", "year"] = "month",
     db: AsyncSession = Depends(get_db)
@@ -70,18 +68,16 @@ async def revenue_summary(
     data = await sales.get_revenue_summary(db, interval)
     return [{"period": row[0], "revenue": to_money(row[1])} for row in data]
 
-# Revenue summary by product category
-@router.get("/summary_by_category", response_model=List[CategoryRevenue])
+@router.get("/summary_by_category", response_model=list[CategoryRevenue])
 async def revenue_by_category(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: AsyncSession = Depends(get_db)
 ):
     check_date_range(start_date, end_date)
     data = await sales.get_revenue_by_category(db, start_date, end_date)
     return [{"category": row[0], "revenue": to_money(row[1])} for row in data]
 
-# Revenue comparison: current vs previous period
 @router.get("/compare", response_model=RevenueComparison)
 async def compare_revenue(
     interval: Literal["day", "week", "month", "year"] = "month",

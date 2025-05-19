@@ -1,13 +1,12 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from app.models.sales import Sale
-from app.schemas.sales import SaleCreate
-from sqlalchemy import func
-from app.models.products import Product
-from sqlalchemy import and_, select, join, func
 from datetime import date, timedelta
 from decimal import Decimal
 
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.products import Product
+from app.models.sales import Sale
+from app.schemas.sales import SaleCreate
 
 
 async def create_sale(db: AsyncSession, sale_in: SaleCreate):

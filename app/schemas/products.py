@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class ProductBase(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)

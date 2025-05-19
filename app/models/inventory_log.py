@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.sql import func
+
 from app.db.base import Base
+
 
 class InventoryLog(Base):
     __tablename__ = "inventory_logs"

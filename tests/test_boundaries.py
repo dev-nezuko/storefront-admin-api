@@ -1,10 +1,13 @@
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
 from app.db.session import AsyncSessionLocal
+from app.main import app
 from app.models.sales import Sale
+
 
 @pytest.mark.asyncio
 async def test_negative_values_and_pagination_rejected():
@@ -18,7 +21,7 @@ async def test_negative_values_and_pagination_rejected():
 @pytest.mark.asyncio
 async def test_comparison_excludes_future_sales():
     async with AsyncSessionLocal() as session:
-        session.add_all([Sale(product_id=1,quantity_sold=1,sale_date=date.today(),total_amount=Decimal("10")),Sale(product_id=1,quantity_sold=1,sale_date=date.today()+timedelta(days=5),total_amount=Decimal("999"))])
+        session.add_all([Sale(product_id=1,quantity_sold=1,sale_date=date.today(),total_amount=Decimal(10)),Sale(product_id=1,quantity_sold=1,sale_date=date.today()+timedelta(days=5),total_amount=Decimal(999))])
         await session.commit()
     async with AsyncClient(transport=ASGITransport(app=app),base_url="http://test") as client:
         response=await client.get("/sales/compare?interval=day")

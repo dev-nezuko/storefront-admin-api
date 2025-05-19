@@ -1,10 +1,13 @@
 import os
+
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["CREATE_SCHEMA"] = "false"
 import pytest_asyncio
-from app.db.session import engine, AsyncSessionLocal
+
 from app.db.base import Base
+from app.db.session import AsyncSessionLocal, engine
 from app.models.products import Product
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def isolated_database():
