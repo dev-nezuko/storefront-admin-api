@@ -1,11 +1,6 @@
-fastapi
-uvicorn[standard]
-SQLAlchemy>=1.4
-aiomysql
-alembic
-python-dotenv
-greenlet
-pydantic>=2,<3
-pydantic-settings
-httpx
-pytest
+fastapi==0.162.2
+uvicorn[standard]==0.54.0
+SQLAlchemy[asyncio]==2.1.8
+aiomysql[rsa]==0.3.2
+pydantic==2.14.3
+pydantic-settings==2.16.2
